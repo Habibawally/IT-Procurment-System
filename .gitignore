@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Python virtual environments
+.venv/
+.venv-*/
+venv/
+__pycache__/
+
+# Build output
+frontend/build/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Runtime data (database and uploaded files)
+*.db
+*.db-journal
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs and OS/editor files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
