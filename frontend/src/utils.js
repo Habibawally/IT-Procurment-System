@@ -1,15 +1,3 @@
-export const STATUS_LABELS = {
-  pending_manager:     'Pending Manager',
-  pending_it:          'Pending IT',
-  pending_procurement: 'Pending Procurement',
-  completed:           'Completed',
-  rejected:            'Rejected',
-};
-
-export const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
-
-export const ITEM_TYPES = ['Hardware', 'Software', 'Accessories', 'Networking', 'Storage', 'Other'];
-
 export function formatDate(str) {
   if (!str) return '—';
   return new Date(str).toLocaleString('en-US', {
@@ -46,22 +34,4 @@ export function calcDuration(from, to) {
   const end = to ? new Date(to) : new Date();
   const hours = (end - new Date(from)) / 3600000;
   return formatHours(hours);
-}
-
-export function getRoleColor(role) {
-  const map = { employee: '#5b9bd5', manager: '#9b7fd4', it: '#4caf7d', procurement: '#f0a500' };
-  return map[role] || '#888';
-}
-
-// Action label mapping
-export function actionLabel(action) {
-  const map = {
-    created: 'Request Created',
-    manager_approved: 'Manager Approved',
-    manager_rejected: 'Manager Rejected',
-    it_approved: 'IT Approved',
-    it_rejected: 'IT Rejected',
-    procurement_completed: 'Procurement Completed',
-  };
-  return map[action] || action;
 }

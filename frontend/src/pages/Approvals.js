@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Layout, PriorityBadge, Loading, Empty } from '../components/shared';
 import { api } from '../api/client';
 import { timeAgo, calcDuration } from '../utils';
-import { ar } from '../i18n';
+import { ar, itemTypeAr } from '../i18n';
 
 const A = ar.approvals;
 const PRIORITY_COLORS = { critical:'#dc2626', high:'#d97706', medium:'#2563eb', low:'#94a3b8' };
@@ -20,14 +20,16 @@ export default function Approvals() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
 
   const config = ROLE_CONFIG[user?.role];
+  const queueStatus = config?.status;
 
   useEffect(() => {
-    if (!config) { setLoading(false); return; }
-    api.getRequests({ status: config.status })
-      .then(setRequests).catch(console.error).finally(() => setLoading(false));
-  }, [user?.role]);
+    if (!queueStatus) { setLoading(false); return; }
+    api.getRequests({ status: queueStatus })
+      .then(setRequests).catch(err => setError(err.message)).finally(() => setLoading(false));
+  }, [queueStatus]);
 
   if (!config) return <Layout><div style={{ padding:40, color:'var(--ink-3)' }}>{A.noRole}</div></Layout>;
 
@@ -62,6 +64,8 @@ export default function Approvals() {
         </div>
       </div>
 
+      {error && <div className="alert alert-error">{error}</div>}
+
       {/* Queue */}
       {loading ? <Loading /> : requests.length === 0 ? (
         <div className="card">
@@ -86,7 +90,7 @@ export default function Approvals() {
                 </div>
                 <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap', flexDirection:'row-reverse' }}>
                   <PriorityBadge priority={r.priority} />
-                  <span className="type-pill">{r.item_type}</span>
+                  <span className="type-pill">{itemTypeAr(r.item_type)}</span>
                 </div>
               </div>
 

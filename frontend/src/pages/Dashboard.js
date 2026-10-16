@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Layout, StatusBadge, PriorityBadge, Loading } from '../components/shared';
 import { api } from '../api/client';
 import { timeAgo, formatHours } from '../utils';
-import { ar } from '../i18n';
+import { ar, itemTypeAr } from '../i18n';
 
 const D = ar.dashboard;
 
@@ -27,11 +27,12 @@ export default function Dashboard() {
   const [stats, setStats]     = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
 
   useEffect(() => {
     Promise.all([api.getStats(), api.getRequests()])
       .then(([s, r]) => { setStats(s); setRequests(r.slice(0, 8)); })
-      .catch(console.error)
+      .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -39,6 +40,14 @@ export default function Dashboard() {
 
   const sMap = {};
   (stats?.statusCounts || []).forEach(s => sMap[s.status] = s.count);
+
+  const stageTimes = [
+    { label: D.managerReview, val: stats?.avgTimes?.avg_manager_hours,     color:'#7c3aed' },
+    { label: D.itReview,      val: stats?.avgTimes?.avg_it_hours,          color:'#2563eb' },
+    { label: D.procurement,   val: stats?.avgTimes?.avg_procurement_hours, color:'#d97706' },
+  ];
+  // Bar length is relative to the slowest stage
+  const maxStage = Math.max(0, ...stageTimes.map(t => t.val || 0));
 
   const h = new Date().getHours();
   const greeting = h < 12 ? D.greetMorning : h < 18 ? D.greetAfternoon : D.greetEvening;
@@ -69,6 +78,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {error && <div className="alert alert-error">{error}</div>}
 
       {/* Stats */}
       <div className="stats-row">
@@ -127,7 +138,7 @@ export default function Dashboard() {
                           <div style={{fontWeight:700, color:'#0f172a', fontSize:13.5}}>{r.title}</div>
                           <div className="ltr" style={{fontSize:11, color:'#94a3b8', marginTop:2}}>#{r.id}</div>
                         </td>
-                        <td><span className="type-pill">{r.item_type}</span></td>
+                        <td><span className="type-pill">{itemTypeAr(r.item_type)}</span></td>
                         <td><PriorityBadge priority={r.priority} /></td>
                         <td><StatusBadge status={r.status} /></td>
                         <td style={{paddingLeft:20, fontSize:12.5, color:'#64748b'}}>{timeAgo(r.created_at)}</td>
@@ -144,18 +155,14 @@ export default function Dashboard() {
           {/* Stage durations */}
           <div className="card" style={{ padding:20 }}>
             <div style={{ fontWeight:800, fontSize:14, color:'#0f172a', marginBottom:16 }}>{D.avgStageTime}</div>
-            {[
-              { label: D.managerReview, val: stats?.avgTimes?.avg_manager_hours,     color:'#7c3aed' },
-              { label: D.itReview,      val: stats?.avgTimes?.avg_it_hours,          color:'#2563eb' },
-              { label: D.procurement,   val: stats?.avgTimes?.avg_procurement_hours, color:'#d97706' },
-            ].map(t => (
+            {stageTimes.map(t => (
               <div key={t.label} style={{ marginBottom:13 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5, direction:'rtl' }}>
                   <span style={{ fontSize:12.5, color:'#64748b', fontWeight:600 }}>{t.label}</span>
                   <span className="ltr" style={{ fontSize:12.5, fontWeight:800, color:'#0f172a' }}>{formatHours(t.val)}</span>
                 </div>
                 <div style={{ height:4, background:'#f1f5f9', borderRadius:4, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width: t.val ? '65%' : '5%', background:t.color, borderRadius:4, transition:'width 0.8s ease' }} />
+                  <div style={{ height:'100%', width: t.val && maxStage ? `${Math.max(5, Math.round((t.val / maxStage) * 100))}%` : '5%', background:t.color, borderRadius:4, transition:'width 0.8s ease' }} />
                 </div>
               </div>
             ))}

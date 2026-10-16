@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Layout, StatusBadge, PriorityBadge, Loading, Modal } from '../components/shared';
 import { api } from '../api/client';
 import { formatDate, calcDuration } from '../utils';
-import { ar, actionLabel } from '../i18n';
+import { ar, actionLabel, itemTypeAr } from '../i18n';
 
 const D = ar.detail;
 
@@ -20,12 +20,29 @@ export default function RequestDetail() {
   const [reason, setReason]           = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess]         = useState('');
+  const [imageUrl, setImageUrl]       = useState(null);
   const fileRef = useRef();
 
   const load = () => {
     api.getRequest(id).then(setRequest).catch(() => navigate('/requests')).finally(() => setLoading(false));
   };
   useEffect(load, [id]);
+
+  // Proof-of-delivery image requires auth, so it is fetched as a blob
+  const deliveryImage = request?.delivery_image;
+  useEffect(() => {
+    if (!deliveryImage) return;
+    let url = null, cancelled = false;
+    api.getDeliveryImageUrl(id)
+      .then(u => { if (cancelled) URL.revokeObjectURL(u); else { url = u; setImageUrl(u); } })
+      .catch(() => setImageUrl(null));
+    return () => { cancelled = true; if (url) URL.revokeObjectURL(url); };
+  }, [id, deliveryImage]);
+
+  function openModal(name) {
+    setError(''); setSuccess('');
+    setModal(name);
+  }
 
   async function handleApprove() {
     setActionLoading(true);
@@ -89,7 +106,7 @@ export default function RequestDetail() {
               <span className="ltr" style={{ fontSize:12, color:'var(--ink-4)', background:'var(--bg-subtle)', padding:'2px 8px', borderRadius:4 }}>#{r.id}</span>
               <StatusBadge status={r.status} />
               <PriorityBadge priority={r.priority} />
-              <span className="type-pill">{r.item_type}</span>
+              <span className="type-pill">{itemTypeAr(r.item_type)}</span>
             </div>
             <h1 style={{ fontSize:22, fontWeight:800, color:'var(--ink)', lineHeight:1.3 }}>{r.title}</h1>
             <div style={{ fontSize:13, color:'var(--ink-3)', marginTop:6 }}>
@@ -100,17 +117,17 @@ export default function RequestDetail() {
           {(canApprove || canComplete) && (
             <div style={{ display:'flex', gap:8, flexShrink:0 }}>
               {canApprove && <>
-                <button className="btn-success" onClick={() => setModal('approve')}>
+                <button className="btn-success" onClick={() => openModal('approve')}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
                   {D.approveBtn}
                 </button>
-                <button className="btn-danger" onClick={() => setModal('reject')}>
+                <button className="btn-danger" onClick={() => openModal('reject')}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   {D.rejectBtn}
                 </button>
               </>}
               {canComplete && (
-                <button className="btn-primary" onClick={() => setModal('complete')}>{D.completeBtn}</button>
+                <button className="btn-primary" onClick={() => openModal('complete')}>{D.completeBtn}</button>
               )}
             </div>
           )}
@@ -178,7 +195,9 @@ export default function RequestDetail() {
           {r.delivery_image && (
             <div className="card">
               <div style={SL}>{D.proofOfDelivery}</div>
-              <img src={`/uploads/${r.delivery_image}`} alt="proof" style={{ maxWidth:'100%', borderRadius:8, border:'1px solid var(--border)' }} />
+              {imageUrl
+                ? <img src={imageUrl} alt="proof" style={{ maxWidth:'100%', borderRadius:8, border:'1px solid var(--border)' }} />
+                : <div style={{ fontSize:13, color:'var(--ink-4)' }}>{ar.common.loading}</div>}
             </div>
           )}
         </div>
@@ -226,6 +245,7 @@ export default function RequestDetail() {
       {/* ── Approve Modal ── */}
       {modal === 'approve' && (
         <Modal title={D.approveModal.title} onClose={() => setModal(null)}>
+          {error && <div className="alert alert-error">{error}</div>}
           <p style={{ fontSize:13.5, color:'var(--ink-2)', marginBottom:18, lineHeight:1.75 }}>
             {D.approveModal.body} <strong style={{ color:'var(--ink)' }}>{r.title}</strong>. {D.approveModal.next}
           </p>
@@ -245,6 +265,7 @@ export default function RequestDetail() {
       {/* ── Reject Modal ── */}
       {modal === 'reject' && (
         <Modal title={D.rejectModal.title} onClose={() => setModal(null)}>
+          {error && <div className="alert alert-error">{error}</div>}
           <p style={{ fontSize:13.5, color:'var(--ink-2)', marginBottom:6, lineHeight:1.75 }}>
             {D.rejectModal.body} <strong style={{ color:'var(--ink)' }}>{r.title}</strong>.
           </p>
@@ -266,6 +287,7 @@ export default function RequestDetail() {
       {/* ── Complete Modal ── */}
       {modal === 'complete' && (
         <Modal title={D.completeModal.title} onClose={() => setModal(null)}>
+          {error && <div className="alert alert-error">{error}</div>}
           <p style={{ fontSize:13.5, color:'var(--ink-2)', marginBottom:18, lineHeight:1.75 }}>
             {D.completeModal.body} <strong style={{ color:'var(--ink)' }}>{r.title}</strong>؟
           </p>

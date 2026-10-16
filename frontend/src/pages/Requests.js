@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Layout, StatusBadge, PriorityBadge, Loading, Empty } from '../components/shared';
 import { api } from '../api/client';
 import { timeAgo } from '../utils';
-import { ar } from '../i18n';
+import { ar, itemTypeAr } from '../i18n';
 
 const R = ar.requests;
 
@@ -24,17 +24,23 @@ export default function Requests() {
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState('');
 
+  // Load everything once; status filter and search are applied locally so
+  // the per-status counts on the filter buttons stay correct.
   useEffect(() => {
-    setLoading(true);
-    api.getRequests(filter ? { status: filter } : {})
-      .then(setAll).catch(console.error).finally(() => setLoading(false));
-  }, [filter]);
+    api.getRequests()
+      .then(setAll).catch(err => setError(err.message)).finally(() => setLoading(false));
+  }, []);
 
+  const q = search.trim().toLowerCase();
   const shown = all.filter(r =>
-    !search ||
-    r.title.toLowerCase().includes(search.toLowerCase()) ||
-    (r.item_type || '').toLowerCase().includes(search.toLowerCase())
+    (!filter || r.status === filter) && (
+      !q ||
+      r.title.toLowerCase().includes(q) ||
+      (r.item_type || '').toLowerCase().includes(q) ||
+      itemTypeAr(r.item_type).includes(q)
+    )
   );
 
   return (
@@ -51,6 +57,8 @@ export default function Requests() {
           </button>
         )}
       </div>
+
+      {error && <div className="alert alert-error">{error}</div>}
 
       {/* Search */}
       <div className="search-box">
@@ -102,7 +110,7 @@ export default function Requests() {
                             </div>
                           </td>
                         )}
-                        <td><span className="type-pill">{r.item_type}</span></td>
+                        <td><span className="type-pill">{itemTypeAr(r.item_type)}</span></td>
                         <td><PriorityBadge priority={r.priority} /></td>
                         <td><StatusBadge status={r.status} /></td>
                         <td style={{paddingLeft:20, fontSize:12.5, color:'#64748b'}}>{timeAgo(r.created_at)}</td>
