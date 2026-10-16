@@ -1,4 +1,4 @@
-const initSqlJs = require('../node_modules/sql.js');
+const initSqlJs = require('sql.js');
 const fs   = require('fs');
 const path = require('path');
 
@@ -9,12 +9,32 @@ let dbInstance = null;
 class DB {
   constructor(sqlDb) {
     this._db = sqlDb;
+    this._inTx = false;
+  }
+
+  // Run fn() atomically: all writes commit together (or roll back on error),
+  // and the database file is written to disk once at the end.
+  transaction(fn) {
+    if (this._inTx) return fn();
+    this._db.run('BEGIN');
+    this._inTx = true;
+    try {
+      const result = fn();
+      this._db.run('COMMIT');
+      return result;
+    } catch (e) {
+      this._db.run('ROLLBACK');
+      throw e;
+    } finally {
+      this._inTx = false;
+      this._save();
+    }
   }
 
   exec(sql) {
     try {
       this._db.run(sql);
-      this._save();
+      if (!this._inTx) this._save();
     } catch (e) {
       console.error('DB exec error:', e.message);
       throw e;
@@ -37,7 +57,7 @@ class DB {
           const r = self._db.exec('SELECT last_insert_rowid() as id');
           const rowid = r?.[0]?.values?.[0]?.[0] ?? null;
 
-          self._save(); // writes to disk (resets last_insert_rowid to 0 — but we already have it)
+          if (!self._inTx) self._save(); // writes to disk (resets last_insert_rowid to 0 — but we already have it)
 
           return { lastInsertRowid: rowid };
         } catch (e) {

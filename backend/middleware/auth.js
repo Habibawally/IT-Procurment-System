@@ -1,5 +1,13 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'procurement_secret_key_mvp';
+const crypto = require('crypto');
+
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  // No secret configured: use a random one so nothing guessable is ever used.
+  // Tokens will stop working after a restart — set JWT_SECRET in backend/.env.
+  JWT_SECRET = crypto.randomBytes(48).toString('hex');
+  console.warn('⚠️  JWT_SECRET is not set — using a temporary random secret. See backend/.env.example');
+}
 
 function authenticate(req, res, next) {
   const auth = req.headers.authorization;

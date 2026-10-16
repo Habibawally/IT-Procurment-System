@@ -1,7 +1,8 @@
 const router = require('express').Router();
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middleware/auth');
 const { getUsers } = require('../controllers/userController');
 
-router.get('/', authenticate, getUsers);
+// The user directory is only for reviewer roles, not employees.
+router.get('/', authenticate, authorize('manager', 'it', 'procurement'), getUsers);
 
 module.exports = router;
