@@ -1,9 +1,8 @@
 # ProcureIT — IT Procurement Management System
 
-
 ## Screenshots
 
-![ProcureIT Dashboard](Screenshots/it_procurment.pngit_procurment.png)
+![ProcureIT Dashboard](Screenshots/it_procurment.png)
 
 **ProcureIT** is a full-stack web application that streamlines IT procurement by digitizing purchase requests, role-based approvals, and delivery tracking through a structured workflow.
 
