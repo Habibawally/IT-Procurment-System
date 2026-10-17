@@ -1,8 +1,17 @@
 # ProcureIT — IT Procurement Management System
 
-A web application for submitting, approving and tracking IT purchase requests
-(hardware, software, accessories, networking, storage). The user interface is in
-Arabic (right-to-left).
+**ProcureIT** is a full-stack web application that streamlines IT procurement by digitizing purchase requests, role-based approvals, and delivery tracking through a structured workflow.
+
+Built with React, Node.js, Express, and SQLite, the system enables employees to submit IT purchase requests while managers, IT teams, and procurement staff review and process them according to their responsibilities.
+
+### Key Features
+
+- **Role-Based Access Control:** Separate permissions for employees, managers, IT reviewers, and procurement staff.
+- **Multi-Stage Approval Workflow:** Track requests through manager review, IT approval, and procurement fulfillment.
+- **Request Tracking & Audit Trail:** Review approval decisions, activity history, and time spent at each stage.
+- **Delivery Proof Uploads:** Attach delivery images when completing approved requests.
+- **Dashboard Statistics:** View request counts by status and average processing times.
+- **Arabic RTL Interface:** A right-to-left user interface designed for Arabic-speaking users.
 
 ## Workflow
 
