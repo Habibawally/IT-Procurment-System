@@ -1,7 +1,10 @@
 # ProcureIT — IT Procurement Management System
 
 
-![ProcureIT Screenshot](Screenshots/Screenshot%20(137).png)
+## Screenshots
+
+![ProcureIT Dashboard](Screenshots\it_procurment.png)
+
 **ProcureIT** is a full-stack web application that streamlines IT procurement by digitizing purchase requests, role-based approvals, and delivery tracking through a structured workflow.
 
 Built with React, Node.js, Express, and SQLite, the system enables employees to submit IT purchase requests while managers, IT teams, and procurement staff review and process them according to their responsibilities.
